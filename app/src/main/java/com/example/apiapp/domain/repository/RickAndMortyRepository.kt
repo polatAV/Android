@@ -9,4 +9,8 @@ interface RickAndMortyRepository {
     fun getAllFavourites(): Flow<List<Character>>
     fun isFavoriteFlow(id: Int): Flow<Boolean>
     suspend fun toggleFavorite(character: Character)
+    fun getRecentQueries(): Flow<List<String>>
+    suspend fun addSearchQuery(query: String)
+    suspend fun deleteSearchQuery(query: String)
+    suspend fun clearSearchHistory()
 }

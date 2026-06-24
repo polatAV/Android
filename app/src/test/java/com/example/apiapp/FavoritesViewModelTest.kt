@@ -3,6 +3,7 @@ package com.example.apiapp
 import com.example.apiapp.domain.model.Character
 import com.example.apiapp.domain.model.Location
 import com.example.apiapp.domain.usecase.GetFavoritesUseCase
+import com.example.apiapp.domain.usecase.ToggleFavoriteUseCase
 import com.example.apiapp.ui.FavoritesViewModel
 import com.example.apiapp.ui.FavoritesUiState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,6 +23,7 @@ class FavoritesViewModelTest {
 
     private val repository = FakeRickAndMortyRepository()
     private val getFavoritesUseCase = GetFavoritesUseCase(repository)
+    private val toggleFavoriteUseCase = ToggleFavoriteUseCase(repository)
     
     private val testCharacters = listOf(
         Character(1, "Rick", "Alive", "Human", "", "Male", "url", Location("Earth", ""), Location("Citadel", ""))
@@ -30,7 +32,7 @@ class FavoritesViewModelTest {
     @Test
     fun testFavoritesMapping() = runTest {
         repository.setFavourites(testCharacters)
-        val viewModel = FavoritesViewModel(getFavoritesUseCase)
+        val viewModel = FavoritesViewModel(getFavoritesUseCase, toggleFavoriteUseCase)
         
         viewModel.favoritesUiState.filter { it is FavoritesUiState.Success }.first()
         val state = viewModel.favoritesUiState.value

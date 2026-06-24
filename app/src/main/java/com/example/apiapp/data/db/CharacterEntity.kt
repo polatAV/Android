@@ -45,3 +45,9 @@ fun Character.toEntity(): CharacterEntity {
         locationName = location.name
     )
 }
+
+@Entity(tableName = "search_history")
+data class SearchHistoryEntity(
+    @PrimaryKey val query: String,
+    val timestamp: Long
+)

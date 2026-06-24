@@ -2,6 +2,7 @@ package com.example.apiapp.data.repository
 
 import com.example.apiapp.data.api.RickAndMortyApi
 import com.example.apiapp.data.db.CharacterDao
+import com.example.apiapp.data.db.SearchHistoryEntity
 import com.example.apiapp.data.db.toDomain
 import com.example.apiapp.data.db.toEntity
 import com.example.apiapp.data.model.toDomain
@@ -22,6 +23,12 @@ class RickAndMortyRepositoryImpl @Inject constructor(
         return try {
             val response = api.getCharacters(name)
             Result.success(response.results.map { it.toDomain() })
+        } catch (e: retrofit2.HttpException) {
+            if (e.code() == 404) {
+                Result.success(emptyList())
+            } else {
+                Result.failure(e)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -47,5 +54,23 @@ class RickAndMortyRepositoryImpl @Inject constructor(
 
     override suspend fun toggleFavorite(character: Character) {
         characterDao.toggleFavourite(character.toEntity())
+    }
+
+    override fun getRecentQueries(): Flow<List<String>> {
+        return characterDao.getRecentQueries().map { entities ->
+            entities.map { it.query }
+        }
+    }
+
+    override suspend fun addSearchQuery(query: String) {
+        characterDao.insertSearchQuery(SearchHistoryEntity(query, System.currentTimeMillis()))
+    }
+
+    override suspend fun deleteSearchQuery(query: String) {
+        characterDao.deleteSearchQuery(query)
+    }
+
+    override suspend fun clearSearchHistory() {
+        characterDao.clearSearchHistory()
     }
 }

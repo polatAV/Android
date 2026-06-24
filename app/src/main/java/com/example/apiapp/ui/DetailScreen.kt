@@ -7,6 +7,8 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -18,16 +20,27 @@ import com.example.apiapp.R
 import com.example.apiapp.domain.model.Character
 import com.example.apiapp.domain.model.Location
 import com.example.apiapp.ui.theme.ApiappTheme
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharacterDetailScreen(
     state: DetailUiState,
     isFavorite: Boolean,
+    errorEvents: Flow<String>,
     onToggleFavorite: (Character) -> Unit,
     onBack: () -> Unit,
     onRetry: () -> Unit
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(errorEvents) {
+        errorEvents.collect { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -41,7 +54,8 @@ fun CharacterDetailScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
         when (state) {
             is DetailUiState.Loading -> LoadingView(modifier = Modifier.padding(padding))
@@ -106,6 +120,7 @@ private fun CharacterDetailScreenPreview() {
                 )
             ),
             isFavorite = false,
+            errorEvents = emptyFlow(),
             onToggleFavorite = {},
             onBack = {},
             onRetry = {}

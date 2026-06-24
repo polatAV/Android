@@ -28,4 +28,16 @@ interface CharacterDao {
             insertFavourite(character)
         }
     }
+
+    @Query("SELECT * FROM search_history ORDER BY timestamp DESC LIMIT 5")
+    fun getRecentQueries(): Flow<List<SearchHistoryEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSearchQuery(query: SearchHistoryEntity)
+
+    @Query("DELETE FROM search_history WHERE `query` = :query")
+    suspend fun deleteSearchQuery(query: String)
+
+    @Query("DELETE FROM search_history")
+    suspend fun clearSearchHistory()
 }

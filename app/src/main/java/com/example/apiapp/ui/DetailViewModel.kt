@@ -51,12 +51,16 @@ class DetailViewModel @Inject constructor(
             initialValue = false
         )
 
+    private val _errorEvents = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val errorEvents: SharedFlow<String> = _errorEvents.asSharedFlow()
+
     fun toggleFavorite(character: Character) {
         viewModelScope.launch {
             try {
                 toggleFavoriteUseCase(character)
             } catch (e: Exception) {
                 android.util.Log.e("DetailViewModel", "Failed to toggle favorite for ${character.name}", e)
+                _errorEvents.emit("Failed to update favorites")
             }
         }
     }

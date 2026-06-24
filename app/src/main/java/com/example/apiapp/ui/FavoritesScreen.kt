@@ -20,6 +20,7 @@ import com.example.apiapp.ui.theme.ApiappTheme
 fun FavoritesScreen(
     state: FavoritesUiState,
     onCharacterClick: (Int) -> Unit,
+    onToggleFavorite: (Character) -> Unit,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -49,7 +50,12 @@ fun FavoritesScreen(
                             items = favourites,
                             key = { it.id }
                         ) { character ->
-                            CharacterItem(character, onCharacterClick)
+                            CharacterItem(
+                                character = character,
+                                isFavorite = true,
+                                onFavoriteClick = { onToggleFavorite(character) },
+                                onClick = onCharacterClick
+                            )
                         }
                     }
                 }
@@ -79,6 +85,7 @@ private fun FavoritesScreenPreview() {
                 )
             ),
             onCharacterClick = {},
+            onToggleFavorite = {},
             onBack = {}
         )
     }

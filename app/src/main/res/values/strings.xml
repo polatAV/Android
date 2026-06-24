@@ -15,4 +15,7 @@
     <string name="character_status">Status: %1$s</string>
     <string name="character_species">Species: %1$s</string>
     <string name="character_gender">Gender: %1$s</string>
+    <string name="recent_searches">Recent Searches</string>
+    <string name="clear_history">Clear All</string>
+    <string name="search_history_empty">Search history is empty.</string>
 </resources>

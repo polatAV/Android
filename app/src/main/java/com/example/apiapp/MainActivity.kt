@@ -31,14 +31,23 @@ class MainActivity : ComponentActivity() {
                         val viewModel: ListViewModel = hiltViewModel()
                         val uiState by viewModel.listUiState.collectAsStateWithLifecycle()
                         val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+                        val statusFilter by viewModel.statusFilter.collectAsStateWithLifecycle()
 
                         CharacterListScreen(
                             state = uiState,
                             searchQuery = searchQuery,
+                            statusFilter = statusFilter,
+                            errorEvents = viewModel.errorEvents,
                             onSearchChange = { viewModel.onSearchQueryChange(it) },
+                            onSearchSubmit = { viewModel.saveSearchQuery(searchQuery) },
+                            onStatusFilterChange = { viewModel.onStatusFilterChange(it) },
                             onCharacterClick = { id ->
+                                viewModel.saveSearchQuery(searchQuery)
                                 navController.navigate("detail/$id")
                             },
+                            onToggleFavorite = { viewModel.toggleFavorite(it) },
+                            onDeleteHistoryQuery = { viewModel.deleteHistoryQuery(it) },
+                            onClearHistory = { viewModel.clearHistory() },
                             onRetry = { viewModel.retry() },
                             onFavoritesClick = {
                                 navController.navigate("favorites")
@@ -56,6 +65,7 @@ class MainActivity : ComponentActivity() {
                         CharacterDetailScreen(
                             state = detailState,
                             isFavorite = isFavorite,
+                            errorEvents = viewModel.errorEvents,
                             onToggleFavorite = { viewModel.toggleFavorite(it) },
                             onBack = { navController.popBackStack() },
                             onRetry = { viewModel.retry() }
@@ -70,6 +80,7 @@ class MainActivity : ComponentActivity() {
                             onCharacterClick = { id ->
                                 navController.navigate("detail/$id")
                             },
+                            onToggleFavorite = { viewModel.toggleFavorite(it) },
                             onBack = { navController.popBackStack() }
                         )
                     }
