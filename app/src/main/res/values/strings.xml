@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">apiapp</string>
+    <string name="remove_from_favorites">Remove from Favorites</string>
+    <string name="add_to_favorites">Add to Favorites</string>
+    <string name="back">Back</string>
+    <string name="favorites">Favorites</string>
+    <string name="search_characters">Search characters...</string>
+    <string name="retry">Retry</string>
+    <string name="app_title">Rick &amp; Morty</string>
+    <string name="details_title">Details</string>
+    <string name="no_characters_found">No characters found for \'%1$s\'</string>
+    <string name="no_favorites_yet">No favorites yet.</string>
+    <string name="character_status">Status: %1$s</string>
+    <string name="character_species">Species: %1$s</string>
+    <string name="character_gender">Gender: %1$s</string>
+    <string name="character_origin">Origin: %1$s</string>
+    <string name="toggle_favorite_error">Failed to update favorites</string>
 </resources>
