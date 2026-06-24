@@ -155,13 +155,16 @@ fun SearchHistorySection(
                         )
                     },
                     trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Delete from history",
-                            modifier = Modifier
-                                .size(18.dp)
-                                .clickable { onDeleteHistoryQuery(query) }
-                        )
+                        IconButton(
+                            onClick = { onDeleteHistoryQuery(query) },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Delete from history",
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 )
             }
