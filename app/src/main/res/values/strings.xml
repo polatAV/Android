@@ -10,9 +10,9 @@
     <string name="details_title">Details</string>
     <string name="no_characters_found">No characters found for \'%1$s\'</string>
     <string name="no_favorites_yet">No favorites yet.</string>
+    <string name="character_origin">Origin: %1$s</string>
+    <string name="toggle_favorite_error">Failed to update favorites</string>
     <string name="character_status">Status: %1$s</string>
     <string name="character_species">Species: %1$s</string>
     <string name="character_gender">Gender: %1$s</string>
-    <string name="character_origin">Origin: %1$s</string>
-    <string name="toggle_favorite_error">Failed to update favorites</string>
 </resources>
