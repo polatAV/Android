@@ -9,25 +9,24 @@
 Описание: Для проекта был выбран Rick and Morty API. Это RESTful API, которое предоставляет информацию о персонажах мультсериала. В приложении реализовано получение списка героев, поиск по имени и детальный просмотр информации.
 
 ## Что нового в ДЗ №4
-1. **Dagger Hilt**: Полная миграция на Dependency Injection. Все зависимости (Retrofit, OkHttpClient, AppDatabase, Dao, Repository) предоставляются через Hilt-модули ([NetworkModule.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/di/NetworkModule.kt), [DatabaseModule.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/di/DatabaseModule.kt)), а не создаются вручную.
-2. **Room Database**: Реализовано хранение избранных персонажей в БД Room (таблица `favourites`). Данные сохраняются локально и переживают перезапуск приложения.
-3. **Архитектура Domain-Driven Design (DDD)**:
-   * Выделен чистый слой `domain` (бизнес-логика, модели [Character.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/domain/model/Character.kt)/[Location.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/domain/model/Location.kt) и Use Cases) без Android-зависимостей и библиотек сериализации JSON (Gson).
-   * Выделен слой данных `data` с сетевыми DTO-моделями ([CharacterDto.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/data/model/CharacterDto.kt)), Room-сущностями и реализацией репозитория [RickAndMortyRepositoryImpl.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/data/repository/RickAndMortyRepositoryImpl.kt), которая связывается через `@Binds` в Hilt-модуле [RepositoryModule.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/di/RepositoryModule.kt).
-4. **Реактивная архитектура**: ViewModels переписаны на реактивные цепочки с использованием Flow-операторов (`combine`, `debounce`, `flatMapLatest`, `stateIn`). Все изменения избранного обновляются реактивно через Room Flow.
-5. **Разделение ViewModel**: Каждому экрану выделена собственная специализированная ViewModel ([ListViewModel.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/ui/ListViewModel.kt), [DetailViewModel.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/ui/DetailViewModel.kt), [FavoritesViewModel.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/ui/FavoritesViewModel.kt)), что решает проблему переиспользования старого стейта при навигации.
-6. **Безопасность и оптимизация**:
-   * **Conditional HTTP Logging (Безопасность сетевого слоя)**: в [NetworkModule.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/di/NetworkModule.kt) логирование сетевых запросов `HttpLoggingInterceptor.Level.BODY` теперь активно только для отладочных сборок (`BuildConfig.DEBUG`), в релизных сборках логирование полностью отключается.
-   * **Защита кода R8/ProGuard**: в сборке `release` включен R8 (`isMinifyEnabled = true`), а сетевые DTO-модели помечены аннотацией `@Keep` для защиты от обфускации.
-   * **Сетевая безопасность**: подключена конфигурация [network_security_config.xml](file:///D:/Android_Polat/app/src/main/res/xml/network_security_config.xml) с запретом на cleartext traffic (HTTP-соединения).
-   * **Динамический debounce / Оптимизация реактивных цепочек**: в [ListViewModel.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/ui/ListViewModel.kt) применен адаптивный debounce (`0L` для пустых запросов и первой загрузки, `500L` для ввода текста), что убрало искусственную задержку в полсекунды при первом запуске приложения.
-   * **Надежность операций / Отказоустойчивость Room**: в [DetailViewModel.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/ui/DetailViewModel.kt) вызов добавления/удаления из избранного обернут в безопасный блок `try-catch` с логированием возможных сбоев Room.
-7. **Оптимизация UI и кодовая гигиена**:
-   * **Локализация и устранение хардкода**: все захардкоженные заголовки, пустые состояния и форматируемые шаблоны деталей персонажа в Compose-экранах ([ListScreen.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/ui/ListScreen.kt), [DetailScreen.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/ui/DetailScreen.kt), [FavoritesScreen.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/ui/FavoritesScreen.kt)) вынесены в строковые ресурсы [strings.xml](file:///D:/Android_Polat/app/src/main/res/values/strings.xml) и применены через `stringResource()`.
-   * Все жестко заданные размеры (отступы, размеры аватарок и баннеров) вынесены из верстки в ресурсы размеров [dimens.xml](file:///D:/Android_Polat/app/src/main/res/values/dimens.xml) и применены через `dimensionResource()`.
-   * Для всех ключевых экранов и компонентов добавлены Compose `@Preview` с тестовыми данными.
-   * В списках `LazyColumn` добавлены уникальные ключи (`key = { it.id }`), а кнопке добавления в избранное задано описание `contentDescription` для поддержки TalkBack.
-   * **Очистка импортов**: из [MainActivity.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/MainActivity.kt) удален лишний неиспользуемый импорт `collectAsState`.
+1. **Внедрение зависимостей (Hilt)**: Настроил автоматическую передачу нужных объектов (базы данных, сетевого клиента, репозиториев) через Hilt, а не создавал их вручную в коде. Модули: [NetworkModule.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/di/NetworkModule.kt), [DatabaseModule.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/di/DatabaseModule.kt).
+2. **База данных Room**: Сделал сохранение избранных персонажей на устройстве в таблице `favourites`. При перезапуске приложения список избранного не стирается.
+3. **Разделение проекта на слои**:
+   * В слой `domain` вынес чистые модели героев ([Character.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/domain/model/Character.kt)/[Location.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/domain/model/Location.kt)) и логику (Use Cases). В этом слое нет кода от Android и библиотек сериализации JSON.
+   * В слой `data` поместил сетевые модели DTO ([CharacterDto.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/data/model/CharacterDto.kt)), таблицы БД и саму реализацию репозитория ([RickAndMortyRepositoryImpl.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/data/repository/RickAndMortyRepositoryImpl.kt)).
+4. **Реактивный интерфейс**: Все экраны обновляются с помощью Kotlin Flow. Любое изменение избранного в базе данных сразу же отображается на экране.
+5. **Отдельные ViewModel для каждого экрана**: Разделил логику на три отдельные ViewModel ([ListViewModel.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/ui/ListViewModel.kt), [DetailViewModel.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/ui/DetailViewModel.kt), [FavoritesViewModel.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/ui/FavoritesViewModel.kt)), чтобы избежать багов с отображением старых данных при переходах.
+6. **Оптимизации и безопасность**:
+   * Настроил логирование сетевых запросов так, чтобы они писались в лог только при отладке (в дебаге), а в релизной версии приложения отключались.
+   * Включил сжатие кода R8 для релизной версии и добавил аннотации `@Keep` для сетевых моделей, чтобы сборка не ломалась.
+   * Отключил незащищенные HTTP-запросы в [network_security_config.xml](file:///D:/Android_Polat/app/src/main/res/xml/network_security_config.xml).
+   * Убрал полусекундную задержку при первом запуске приложения — теперь задержка поиска срабатывает только при вводе текста, а не при старте.
+   * Добавил блок `try-catch` во ViewModel, чтобы приложение не вылетало при ошибках сохранения в базу данных.
+7. **Работа с ресурсами и интерфейсом**:
+   * Вынес все захардкоженные тексты, шаблоны и сообщения в строковые ресурсы [strings.xml](file:///D:/Android_Polat/app/src/main/res/values/strings.xml).
+   * Вынес размеры и отступы элементов интерфейса в [dimens.xml](file:///D:/Android_Polat/app/src/main/res/values/dimens.xml).
+   * Добавил `@Preview` для просмотра компонентов в Android Studio.
+   * Добавил уникальные ключи для списков `LazyColumn` и удалил лишний импорт `collectAsState` в [MainActivity.kt](file:///D:/Android_Polat/app/src/main/java/com/example/apiapp/MainActivity.kt).
 
 ## Хранение в Room
 * **Таблица**: `favourites`
