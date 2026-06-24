@@ -1,10 +1,4 @@
-package com.example.apiapp.data.model
-
-import com.google.gson.annotations.SerializedName
-
-data class CharacterResponse(
-    val results: List<Character>
-)
+package com.example.apiapp.domain.model
 
 data class Character(
     val id: Int,
@@ -16,9 +10,4 @@ data class Character(
     val image: String,
     val origin: Location,
     val location: Location
-)
-
-data class Location(
-    val name: String,
-    val url: String
 )
