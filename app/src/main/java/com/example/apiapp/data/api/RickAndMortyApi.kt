@@ -1,7 +1,7 @@
 package com.example.apiapp.data.api
 
-import com.example.apiapp.data.model.Character
-import com.example.apiapp.data.model.CharacterResponse
+import com.example.apiapp.data.model.CharacterDto
+import com.example.apiapp.data.model.CharacterResponseDto
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -10,10 +10,10 @@ interface RickAndMortyApi {
     @GET("character")
     suspend fun getCharacters(
         @Query("name") name: String? = null
-    ): CharacterResponse
+    ): CharacterResponseDto
 
     @GET("character/{id}")
     suspend fun getCharacter(
         @Path("id") id: Int
-    ): Character
+    ): CharacterDto
 }
