@@ -12,7 +12,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.apiapp.ui.*
+import com.example.apiapp.ui.CharacterListScreen
+import com.example.apiapp.ui.CharacterDetailScreen
+import com.example.apiapp.ui.FavoritesScreen
+import com.example.apiapp.ui.ListViewModel
+import com.example.apiapp.ui.DetailViewModel
+import com.example.apiapp.ui.FavoritesViewModel
 import com.example.apiapp.ui.theme.ApiappTheme
 import dagger.hilt.android.AndroidEntryPoint
 
