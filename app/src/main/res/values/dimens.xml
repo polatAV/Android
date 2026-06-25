@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="padding_small">8.dp</dimen>
+    <dimen name="padding_medium">16.dp</dimen>
+    <dimen name="spacing_small">8.dp</dimen>
+    <dimen name="spacing_medium">16.dp</dimen>
+    <dimen name="avatar_size">56.dp</dimen>
+    <dimen name="detail_image_size">200.dp</dimen>
+</resources>

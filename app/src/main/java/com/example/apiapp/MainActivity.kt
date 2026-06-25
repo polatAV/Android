@@ -4,59 +4,56 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.apiapp.data.api.RickAndMortyApi
-import com.example.apiapp.data.repository.RickAndMortyRepository
-import com.example.apiapp.ui.*
+import com.example.apiapp.ui.CharacterListScreen
+import com.example.apiapp.ui.CharacterDetailScreen
+import com.example.apiapp.ui.FavoritesScreen
+import com.example.apiapp.ui.ListViewModel
+import com.example.apiapp.ui.DetailViewModel
+import com.example.apiapp.ui.FavoritesViewModel
 import com.example.apiapp.ui.theme.ApiappTheme
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val api = Retrofit.Builder()
-            .baseUrl("https://rickandmortyapi.com/api/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .client(
-                OkHttpClient.Builder()
-                    .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
-                    .build()
-            )
-            .build()
-            .create(RickAndMortyApi::class.java)
-
-        val repository = RickAndMortyRepository(api)
 
         enableEdgeToEdge()
         setContent {
             ApiappTheme {
                 val navController = rememberNavController()
-                val viewModel: MainViewModel = viewModel(
-                    factory = MainViewModel.provideFactory(repository)
-                )
-                val uiState by viewModel.uiState.collectAsState()
 
                 NavHost(navController = navController, startDestination = "list") {
                     composable("list") {
+                        val viewModel: ListViewModel = hiltViewModel()
+                        val uiState by viewModel.listUiState.collectAsStateWithLifecycle()
+                        val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+                        val statusFilter by viewModel.statusFilter.collectAsStateWithLifecycle()
+
                         CharacterListScreen(
                             state = uiState,
+                            searchQuery = searchQuery,
+                            statusFilter = statusFilter,
+                            errorEvents = viewModel.errorEvents,
                             onSearchChange = { viewModel.onSearchQueryChange(it) },
+                            onSearchSubmit = { viewModel.saveSearchQuery(searchQuery) },
+                            onStatusFilterChange = { viewModel.onStatusFilterChange(it) },
                             onCharacterClick = { id ->
+                                viewModel.saveSearchQuery(searchQuery)
                                 navController.navigate("detail/$id")
                             },
-                            onRetry = { viewModel.retryListLoad() },
+                            onToggleFavorite = { viewModel.toggleFavorite(it) },
+                            onDeleteHistoryQuery = { viewModel.deleteHistoryQuery(it) },
+                            onClearHistory = { viewModel.clearHistory() },
+                            onRetry = { viewModel.retry() },
                             onFavoritesClick = {
                                 navController.navigate("favorites")
                             }
@@ -65,30 +62,30 @@ class MainActivity : ComponentActivity() {
                     composable(
                         route = "detail/{characterId}",
                         arguments = listOf(navArgument("characterId") { type = NavType.IntType })
-                    ) { backStackEntry ->
-                        val id = backStackEntry.arguments?.getInt("characterId") ?: 0
-
-                        LaunchedEffect(id) {
-                            viewModel.loadCharacterDetail(id)
-                        }
-
-                        val detailState by viewModel.detailUiState.collectAsState()
+                    ) {
+                        val viewModel: DetailViewModel = hiltViewModel()
+                        val detailState by viewModel.detailUiState.collectAsStateWithLifecycle()
+                        val isFavorite by viewModel.isFavorite.collectAsStateWithLifecycle()
 
                         CharacterDetailScreen(
                             state = detailState,
-                            isFavorite = uiState.favourites.contains(id),
+                            isFavorite = isFavorite,
+                            errorEvents = viewModel.errorEvents,
                             onToggleFavorite = { viewModel.toggleFavorite(it) },
                             onBack = { navController.popBackStack() },
-                            onRetry = { viewModel.loadCharacterDetail(id) }
+                            onRetry = { viewModel.retry() }
                         )
                     }
                     composable("favorites") {
+                        val viewModel: FavoritesViewModel = hiltViewModel()
+                        val favoritesState by viewModel.favoritesUiState.collectAsStateWithLifecycle()
+
                         FavoritesScreen(
-                            allCharacters = uiState.characters,
-                            favoriteIds = uiState.favourites,
+                            state = favoritesState,
                             onCharacterClick = { id ->
                                 navController.navigate("detail/$id")
                             },
+                            onToggleFavorite = { viewModel.toggleFavorite(it) },
                             onBack = { navController.popBackStack() }
                         )
                     }
