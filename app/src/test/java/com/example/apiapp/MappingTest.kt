@@ -5,9 +5,9 @@ import com.example.apiapp.domain.model.Location
 import com.example.apiapp.data.model.CharacterDto
 import com.example.apiapp.data.model.LocationDto
 import com.example.apiapp.data.model.toDomain
-import com.example.apiapp.data.db.CharacterEntity
+import com.example.apiapp.data.db.FavoriteCharacterEntity
 import com.example.apiapp.data.db.toDomain
-import com.example.apiapp.data.db.toEntity
+import com.example.apiapp.data.db.toFavoriteEntity
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -46,8 +46,9 @@ class MappingTest {
             origin = Location("Earth", ""),
             location = Location("Citadel", "")
         )
-        val entity = domain.toEntity()
+        val entity = domain.toFavoriteEntity(userId = 1)
         assertEquals(2, entity.id)
+        assertEquals(1, entity.userId)
         assertEquals("Morty", entity.name)
         assertEquals("Earth", entity.originName)
         
@@ -57,3 +58,4 @@ class MappingTest {
         assertEquals(domain.origin.name, restoredDomain.origin.name)
     }
 }
+

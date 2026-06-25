@@ -5,5 +5,16 @@
     <dimen name="spacing_small">8.dp</dimen>
     <dimen name="spacing_medium">16.dp</dimen>
     <dimen name="avatar_size">56.dp</dimen>
+    <dimen name="avatar_size_small">24.dp</dimen>
+    <dimen name="avatar_size_medium">36.dp</dimen>
+    <dimen name="avatar_size_large">48.dp</dimen>
+    <dimen name="avatar_size_extra_small">32.dp</dimen>
+    <dimen name="padding_extra_small">2.dp</dimen>
+    <dimen name="padding_zero">0.dp</dimen>
+    <dimen name="border_width_medium">2.dp</dimen>
+    <dimen name="profile_dialog_max_height">150.dp</dimen>
+    <dimen name="spacing_extra_small">4.dp</dimen>
+    <dimen name="search_history_item_height">32.dp</dimen>
+    <dimen name="search_history_icon_size">18.dp</dimen>
     <dimen name="detail_image_size">200.dp</dimen>
 </resources>

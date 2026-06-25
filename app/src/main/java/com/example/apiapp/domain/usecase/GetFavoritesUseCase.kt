@@ -1,14 +1,16 @@
 package com.example.apiapp.domain.usecase
 
 import com.example.apiapp.domain.model.Character
-import com.example.apiapp.domain.repository.RickAndMortyRepository
 import kotlinx.coroutines.flow.Flow
+import com.example.apiapp.domain.repository.FavoriteRepository
 import javax.inject.Inject
 
 class GetFavoritesUseCase @Inject constructor(
-    private val repository: RickAndMortyRepository
+    private val favoriteRepository: FavoriteRepository
 ) {
-    operator fun invoke(): Flow<List<Character>> {
-        return repository.getAllFavourites()
+    operator fun invoke(userId: Int): Flow<List<Character>> {
+        return favoriteRepository.getAllFavourites(userId)
     }
 }
+
+

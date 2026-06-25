@@ -1,10 +1,10 @@
 package com.example.apiapp.data.repository
 
 import com.example.apiapp.data.api.RickAndMortyApi
-import com.example.apiapp.data.db.CharacterDao
-import com.example.apiapp.data.db.SearchHistoryEntity
+import com.example.apiapp.data.db.CachedCharacterDao
+import com.example.apiapp.data.db.FavoriteDao
+import com.example.apiapp.data.db.toCachedEntity
 import com.example.apiapp.data.db.toDomain
-import com.example.apiapp.data.db.toEntity
 import com.example.apiapp.data.model.toDomain
 import com.example.apiapp.domain.model.Character
 import com.example.apiapp.domain.repository.RickAndMortyRepository
@@ -16,7 +16,8 @@ import javax.inject.Singleton
 @Singleton
 class RickAndMortyRepositoryImpl @Inject constructor(
     private val api: RickAndMortyApi,
-    private val characterDao: CharacterDao
+    private val favoriteDao: FavoriteDao,
+    private val cachedCharacterDao: CachedCharacterDao
 ) : RickAndMortyRepository {
 
     override suspend fun getCharacters(name: String?): Result<List<Character>> {
@@ -24,6 +25,7 @@ class RickAndMortyRepositoryImpl @Inject constructor(
             val response = api.getCharacters(name)
             Result.success(response.results.map { it.toDomain() })
         } catch (e: retrofit2.HttpException) {
+            // api rick and morty возвращает 404 ошибку, если персонажи по фильтру поиска не найдены
             if (e.code() == 404) {
                 Result.success(emptyList())
             } else {
@@ -34,43 +36,57 @@ class RickAndMortyRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getCharacter(id: Int): Result<Character> {
+    override suspend fun getCharacter(id: Int, userId: Int?): Result<Character> {
         return try {
-            Result.success(api.getCharacter(id).toDomain())
+            val fresh = api.getCharacter(id).toDomain()
+            try {
+                // кэшируем свежие данные из сети, чтобы поддерживать оффлайн-режим
+                cachedCharacterDao.insertCachedCharacters(listOf(fresh.toCachedEntity()))
+            } catch (dbEx: Exception) {
+                android.util.Log.e("RickAndMortyRepository", "failed to save character to cache", dbEx)
+            }
+            Result.success(fresh)
         } catch (e: Exception) {
-            Result.failure(e)
+            try {
+                // ищем сначала в избранном, затем в глобальном кэше
+                val localEntity = if (userId != null) {
+                    favoriteDao.getFavoriteCharacterById(id, userId)
+                } else {
+                    null
+                }
+                if (localEntity != null) {
+                    Result.success(localEntity.toDomain())
+                } else {
+                    val cachedEntity = cachedCharacterDao.getCachedCharacterById(id)
+                    if (cachedEntity != null) {
+                        Result.success(cachedEntity.toDomain())
+                    } else {
+                        Result.failure(e)
+                    }
+                }
+            } catch (dbEx: Exception) {
+                android.util.Log.e("RickAndMortyRepository", "failed to fetch from local database during fallback", dbEx)
+                Result.failure(e)
+            }
         }
     }
 
-    override fun getAllFavourites(): Flow<List<Character>> {
-        return characterDao.getAllFavourites().map { entities ->
+    override suspend fun getCachedCharacters(): List<Character> {
+        return cachedCharacterDao.getCachedCharacters().map { it.toDomain() }
+    }
+
+    override fun getCachedCharactersFlow(): Flow<List<Character>> {
+        return cachedCharacterDao.getCachedCharactersFlow().map { entities ->
             entities.map { it.toDomain() }
         }
     }
 
-    override fun isFavoriteFlow(id: Int): Flow<Boolean> {
-        return characterDao.isFavouriteFlow(id)
+    override suspend fun saveCachedCharacters(characters: List<Character>) {
+        val entities = characters.map { it.toCachedEntity() }
+        cachedCharacterDao.insertCachedCharacters(entities)
     }
 
-    override suspend fun toggleFavorite(character: Character) {
-        characterDao.toggleFavourite(character.toEntity())
-    }
-
-    override fun getRecentQueries(): Flow<List<String>> {
-        return characterDao.getRecentQueries().map { entities ->
-            entities.map { it.query }
-        }
-    }
-
-    override suspend fun addSearchQuery(query: String) {
-        characterDao.insertSearchQuery(SearchHistoryEntity(query, System.currentTimeMillis()))
-    }
-
-    override suspend fun deleteSearchQuery(query: String) {
-        characterDao.deleteSearchQuery(query)
-    }
-
-    override suspend fun clearSearchHistory() {
-        characterDao.clearSearchHistory()
+    override suspend fun clearCachedCharacters() {
+        cachedCharacterDao.clearCachedCharacters()
     }
 }

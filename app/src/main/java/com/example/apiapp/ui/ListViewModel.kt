@@ -5,11 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.apiapp.domain.model.Character
 import com.example.apiapp.domain.usecase.GetCharactersUseCase
 import com.example.apiapp.domain.usecase.GetFavoritesUseCase
-import com.example.apiapp.domain.usecase.GetSearchHistoryUseCase
-import com.example.apiapp.domain.usecase.AddSearchHistoryUseCase
-import com.example.apiapp.domain.usecase.DeleteSearchHistoryUseCase
-import com.example.apiapp.domain.usecase.ClearSearchHistoryUseCase
 import com.example.apiapp.domain.usecase.ToggleFavoriteUseCase
+import com.example.apiapp.domain.usecase.ManageSearchHistoryUseCase
+import com.example.apiapp.domain.usecase.ManageUsersUseCase
+import com.example.apiapp.domain.usecase.GetAllNotesUseCase
+import com.example.apiapp.domain.usecase.GetAllTagsUseCase
+import com.example.apiapp.domain.repository.RickAndMortyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -25,41 +26,23 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-data class CharacterItemUiState(
-    val character: Character,
-    val isFavorite: Boolean
-)
-
-sealed interface ListUiState {
-    object Loading : ListUiState
-    data class Success(
-        val characters: List<CharacterItemUiState>,
-        val queries: List<String>
-    ) : ListUiState
-    data class Error(val message: String) : ListUiState
-    data class Empty(val query: String) : ListUiState
-}
-
-sealed interface ApiState {
-    object Loading : ApiState
-    data class Success(val query: String, val characters: List<Character>) : ApiState
-    data class Error(val throwable: Throwable) : ApiState
-}
 
 @HiltViewModel
 class ListViewModel @Inject constructor(
     private val getCharactersUseCase: GetCharactersUseCase,
     private val getFavoritesUseCase: GetFavoritesUseCase,
-    private val getSearchHistoryUseCase: GetSearchHistoryUseCase,
-    private val addSearchHistoryUseCase: AddSearchHistoryUseCase,
-    private val deleteSearchHistoryUseCase: DeleteSearchHistoryUseCase,
-    private val clearSearchHistoryUseCase: ClearSearchHistoryUseCase,
-    private val toggleFavoriteUseCase: ToggleFavoriteUseCase
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
+    private val manageSearchHistoryUseCase: ManageSearchHistoryUseCase,
+    private val manageUsersUseCase: ManageUsersUseCase,
+    private val getAllNotesUseCase: GetAllNotesUseCase,
+    private val getAllTagsUseCase: GetAllTagsUseCase,
+    private val rickAndMortyRepository: RickAndMortyRepository
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -73,68 +56,101 @@ class ListViewModel @Inject constructor(
     private val _errorEvents = MutableSharedFlow<String>(extraBufferCapacity = 1)
     val errorEvents: SharedFlow<String> = _errorEvents.asSharedFlow()
 
+    val activeUserId: StateFlow<Int?> = manageUsersUseCase.getActiveUserId()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    init {
+        viewModelScope.launch {
+            // инициализируем пользователя по умолчанию, если БД пуста
+            val currentActiveId = manageUsersUseCase.getActiveUserId().first()
+            val users = manageUsersUseCase.getUsers().first()
+            if (users.isEmpty()) {
+                val guestId = manageUsersUseCase.createUser("Guest", "👴")
+                manageUsersUseCase.setActiveUser(guestId)
+            } else if (currentActiveId == null || users.none { it.id == currentActiveId }) {
+                manageUsersUseCase.setActiveUser(users.first().id)
+            }
+        }
+    }
+
     @OptIn(kotlinx.coroutines.FlowPreview::class, kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    private val apiResultFlow: Flow<ApiState> = combine(
-        _searchQuery
-            .map { it.trim() }
-            .debounce { query -> if (query.isEmpty()) 0L else 500L }
-            .distinctUntilChanged(),
+    private val apiResultFlow: SharedFlow<ApiState> = combine(
+        _searchQuery.map { it.trim() }.debounce { if (it.isEmpty()) 0L else 500L }.distinctUntilChanged(),
         _retryTrigger.onStart { emit(Unit) }
     ) { query, _ -> query }
         .flatMapLatest { query ->
             flow {
                 emit(ApiState.Loading)
                 getCharactersUseCase(query.ifBlank { null })
-                    .onSuccess { characters ->
-                        emit(ApiState.Success(query, characters))
+                    .onSuccess {
+                        if (query.isBlank()) rickAndMortyRepository.saveCachedCharacters(it)
+                        emit(ApiState.Success(query, it, isFromCache = false))
                     }
-                    .onFailure { throwable ->
-                        emit(ApiState.Error(throwable))
+                    .onFailure {
+                        val cached = rickAndMortyRepository.getCachedCharacters()
+                        if (cached.isNotEmpty() && query.isBlank()) {
+                            emit(ApiState.Success(query, cached, isFromCache = true))
+                        } else {
+                            emit(ApiState.Error(it))
+                        }
                     }
             }
         }
+        .shareIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            replay = 1
+        )
 
-    val listUiState: StateFlow<ListUiState> = combine(
-        apiResultFlow,
-        _statusFilter,
-        getFavoritesUseCase(),
-        getSearchHistoryUseCase()
-    ) { apiState, filter, favorites, history ->
-        when (apiState) {
-            is ApiState.Loading -> {
-                ListUiState.Loading
-            }
-            is ApiState.Error -> {
-                ListUiState.Error(apiState.throwable.message ?: "Unknown error")
-            }
-            is ApiState.Success -> {
-                val filtered = apiState.characters.filter {
-                    filter == "All" || it.status.equals(filter, ignoreCase = true)
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val listUiState: StateFlow<ListUiState> = activeUserId
+        .flatMapLatest { userId ->
+            if (userId != null) {
+                val userContextFlow = combine(
+                    manageSearchHistoryUseCase(userId),
+                    manageUsersUseCase.getUsers(),
+                    getAllNotesUseCase(userId),
+                    getAllTagsUseCase(userId)
+                ) { history, users, notes, tags ->
+                    Pair(Pair(history, users), Pair(notes, tags))
                 }
-                if (filtered.isEmpty()) {
-                    ListUiState.Empty(apiState.query)
-                } else {
-                    val favoriteIds = favorites.map { it.id }.toSet()
-                    val uiItems = filtered.map { character ->
-                        CharacterItemUiState(character, isFavorite = character.id in favoriteIds)
-                    }
-                    ListUiState.Success(uiItems, history)
+
+                combine(
+                    apiResultFlow,
+                    _statusFilter,
+                    getFavoritesUseCase(userId),
+                    userContextFlow
+                ) { apiState, filter, favorites, context ->
+                    val (historyUsers, notesTags) = context
+                    val (history, users) = historyUsers
+                    val (notes, tags) = notesTags
+                    mapToListUiState(apiState, filter, favorites, history, users, userId, notes, tags)
                 }
+            } else {
+                flow { emit(ListUiState.Loading) }
             }
         }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = ListUiState.Loading
-    )
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ListUiState.Loading
+        )
 
     fun onSearchQueryChange(newQuery: String) {
-        val cleaned = newQuery.replace("\n", "").replace("\r", "")
-        _searchQuery.value = cleaned
+        _searchQuery.value = newQuery.replace("\n", "").replace("\r", "")
     }
 
     fun onStatusFilterChange(newStatus: String) {
         _statusFilter.value = newStatus
+    }
+
+    fun selectUser(userId: Int) = viewModelScope.launch {
+        manageUsersUseCase.setActiveUser(userId)
+    }
+
+    fun createAndSelectUser(name: String, avatarResName: String) = viewModelScope.launch {
+        val newId = manageUsersUseCase.createUser(name, avatarResName)
+        manageUsersUseCase.setActiveUser(newId)
     }
 
     fun retry() {
@@ -142,44 +158,33 @@ class ListViewModel @Inject constructor(
     }
 
     fun toggleFavorite(character: Character) {
+        val userId = activeUserId.value ?: return
         viewModelScope.launch {
-            try {
-                toggleFavoriteUseCase(character)
-            } catch (e: Exception) {
-                _errorEvents.emit("Failed to update favorites")
-            }
+            runCatching { toggleFavoriteUseCase(character, userId) }
+                .onFailure { _errorEvents.emit("Failed to update favorites") }
         }
     }
 
-    fun deleteHistoryQuery(query: String) {
-        viewModelScope.launch {
-            try {
-                deleteSearchHistoryUseCase(query)
-            } catch (e: Exception) {
-                // ignore
-            }
+    fun deleteHistoryQuery(query: String) = viewModelScope.launch {
+        activeUserId.value?.let { userId ->
+            runCatching { manageSearchHistoryUseCase.delete(query, userId) }
+                .onFailure { android.util.Log.e("ListViewModel", "failed to delete history query", it) }
         }
     }
 
-    fun clearHistory() {
-        viewModelScope.launch {
-            try {
-                clearSearchHistoryUseCase()
-            } catch (e: Exception) {
-                // ignore
-            }
+    fun clearHistory() = viewModelScope.launch {
+        activeUserId.value?.let { userId ->
+            runCatching { manageSearchHistoryUseCase.clear(userId) }
+                .onFailure { android.util.Log.e("ListViewModel", "failed to clear history", it) }
         }
     }
 
-    fun saveSearchQuery(query: String) {
-        viewModelScope.launch {
-            try {
-                val cleaned = query.trim().replace("\n", "").replace("\r", "")
-                if (cleaned.isNotBlank()) {
-                    addSearchHistoryUseCase(cleaned)
-                }
-            } catch (e: Exception) {
-                // ignore
+    fun saveSearchQuery(query: String) = viewModelScope.launch {
+        activeUserId.value?.let { userId ->
+            val cleaned = query.trim().replace("\n", "").replace("\r", "")
+            if (cleaned.isNotBlank()) {
+                runCatching { manageSearchHistoryUseCase.add(cleaned, userId) }
+                    .onFailure { android.util.Log.e("ListViewModel", "failed to save search query", it) }
             }
         }
     }

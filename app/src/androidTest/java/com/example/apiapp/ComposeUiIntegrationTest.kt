@@ -41,7 +41,7 @@ class ComposeUiIntegrationTest {
     fun testUiSuccessStateDisplaysCharacters() {
         composeTestRule.setContent {
             CharacterListScreen(
-                state = ListUiState.Success(uiItems, queries = emptyList()),
+                state = ListUiState.Success(uiItems, queries = emptyList(), isFromCache = false, currentUser = null, allUsers = emptyList()),
                 searchQuery = "",
                 statusFilter = "All",
                 errorEvents = emptyFlow(),
@@ -53,7 +53,10 @@ class ComposeUiIntegrationTest {
                 onDeleteHistoryQuery = {},
                 onClearHistory = {},
                 onRetry = {},
-                onFavoritesClick = {}
+                onFavoritesClick = {},
+                onSettingsClick = {},
+                onSelectUser = {},
+                onCreateUser = { _, _ -> }
             )
         }
 
@@ -79,7 +82,10 @@ class ComposeUiIntegrationTest {
                 onDeleteHistoryQuery = {},
                 onClearHistory = {},
                 onRetry = { retryClicked = true },
-                onFavoritesClick = {}
+                onFavoritesClick = {},
+                onSettingsClick = {},
+                onSelectUser = {},
+                onCreateUser = { _, _ -> }
             )
         }
 
@@ -96,7 +102,7 @@ class ComposeUiIntegrationTest {
 
         composeTestRule.setContent {
             CharacterListScreen(
-                state = ListUiState.Success(uiItems, queries = emptyList()),
+                state = ListUiState.Success(uiItems, queries = emptyList(), isFromCache = false, currentUser = null, allUsers = emptyList()),
                 searchQuery = "",
                 statusFilter = "All",
                 errorEvents = emptyFlow(),
@@ -108,7 +114,10 @@ class ComposeUiIntegrationTest {
                 onDeleteHistoryQuery = {},
                 onClearHistory = {},
                 onRetry = {},
-                onFavoritesClick = {}
+                onFavoritesClick = {},
+                onSettingsClick = {},
+                onSelectUser = {},
+                onCreateUser = { _, _ -> }
             )
         }
 

@@ -1,6 +1,9 @@
 package com.example.apiapp.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -20,6 +23,7 @@ import coil.compose.AsyncImage
 import com.example.apiapp.R
 import com.example.apiapp.domain.model.Character
 import com.example.apiapp.domain.model.Location
+import com.example.apiapp.domain.model.User
 import com.example.apiapp.ui.theme.ApiappTheme
 
 import androidx.compose.material.icons.Icons
@@ -29,16 +33,40 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
 
 @Composable
+fun User.getDisplayName(): String {
+    return if (name == "Guest" || name == "Гость") {
+        stringResource(R.string.default_user_name)
+    } else {
+        name
+    }
+}
+
+@Composable
 fun CharacterItem(
     character: Character,
     isFavorite: Boolean,
     onFavoriteClick: () -> Unit,
-    onClick: (Int) -> Unit
+    onClick: (Int) -> Unit,
+    hasNotes: Boolean = false,
+    hasTags: Boolean = false
 ) {
     ListItem(
         modifier = Modifier.clickable { onClick(character.id) },
         headlineContent = { Text(character.name) },
-        supportingContent = { Text(character.species) },
+        supportingContent = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_small))
+            ) {
+                Text(com.example.apiapp.ui.util.translateSpecies(character.species))
+                if (hasNotes) {
+                    Text("📝", style = MaterialTheme.typography.bodySmall)
+                }
+                if (hasTags) {
+                    Text("🏷️", style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        },
         leadingContent = {
             AsyncImage(
                 model = character.image,
@@ -100,78 +128,29 @@ fun EmptyView(message: String, modifier: Modifier = Modifier) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchHistorySection(
-    queries: List<String>,
-    onSearchChange: (String) -> Unit,
-    onDeleteHistoryQuery: (String) -> Unit,
-    onClearHistory: () -> Unit,
+fun UserAvatar(
+    avatar: String,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = dimensionResource(id = R.dimen.padding_medium)),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    if (avatar.startsWith("http")) {
+        AsyncImage(
+            model = avatar,
+            contentDescription = null,
+            modifier = modifier.clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+    } else {
+        Box(
+            modifier = modifier
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = stringResource(R.string.recent_searches),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (queries.isNotEmpty()) {
-                TextButton(
-                    onClick = onClearHistory,
-                    contentPadding = PaddingValues(0.dp),
-                    modifier = Modifier.height(32.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.clear_history),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(4.dp))
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_small)),
-            contentPadding = PaddingValues(horizontal = dimensionResource(id = R.dimen.padding_medium)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(queries) { query ->
-                InputChip(
-                    selected = false,
-                    onClick = { onSearchChange(query) },
-                    label = {
-                        Text(
-                            text = query,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    trailingIcon = {
-                        IconButton(
-                            onClick = { onDeleteHistoryQuery(query) },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = "Delete from history",
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-                )
-            }
+            Text(text = avatar, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable

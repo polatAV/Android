@@ -1,6 +1,8 @@
 package com.example.apiapp.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
@@ -11,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -28,15 +31,19 @@ import kotlinx.coroutines.flow.emptyFlow
 fun CharacterDetailScreen(
     state: DetailUiState,
     isFavorite: Boolean,
-    errorEvents: Flow<String>,
+    noteText: String,
+    tags: List<String>,
+    snackbarEvents: Flow<String>,
     onToggleFavorite: (Character) -> Unit,
+    onSaveNote: (String) -> Unit,
+    onToggleTag: (String) -> Unit,
     onBack: () -> Unit,
     onRetry: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(errorEvents) {
-        errorEvents.collect { message ->
+    LaunchedEffect(snackbarEvents) {
+        snackbarEvents.collect { message ->
             snackbarHostState.showSnackbar(message)
         }
     }
@@ -55,6 +62,7 @@ fun CharacterDetailScreen(
                 }
             )
         },
+        contentWindowInsets = WindowInsets.safeDrawing,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { padding ->
         when (state) {
@@ -62,25 +70,33 @@ fun CharacterDetailScreen(
             is DetailUiState.Error -> ErrorView(state.message, onRetry, modifier = Modifier.padding(padding))
             is DetailUiState.Success -> {
                 val character = state.character
+                val layoutDirection = LocalLayoutDirection.current
                 Column(
                     modifier = Modifier
-                        .padding(padding)
                         .fillMaxSize()
+                        .padding(
+                            top = padding.calculateTopPadding(),
+                            start = padding.calculateStartPadding(layoutDirection),
+                            end = padding.calculateEndPadding(layoutDirection)
+                        )
+                        .consumeWindowInsets(padding)
+                        .verticalScroll(androidx.compose.foundation.rememberScrollState())
+                        .padding(bottom = padding.calculateBottomPadding())
                         .padding(dimensionResource(id = R.dimen.padding_medium)),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     AsyncImage(
                         model = character.image,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.character_image_desc, character.name),
                         modifier = Modifier.size(dimensionResource(id = R.dimen.detail_image_size)),
                         contentScale = ContentScale.Crop
                     )
                     Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_medium)))
                     Text(text = character.name, style = MaterialTheme.typography.headlineMedium)
-                    Text(text = stringResource(R.string.character_status, character.status))
-                    Text(text = stringResource(R.string.character_species, character.species))
-                    Text(text = stringResource(R.string.character_gender, character.gender))
-                    Text(text = stringResource(R.string.character_origin, character.origin.name))
+                    Text(text = stringResource(R.string.character_status, com.example.apiapp.ui.util.translateStatus(character.status)))
+                    Text(text = stringResource(R.string.character_species, com.example.apiapp.ui.util.translateSpecies(character.species)))
+                    Text(text = stringResource(R.string.character_gender, com.example.apiapp.ui.util.translateGender(character.gender)))
+                    Text(text = stringResource(R.string.character_origin, com.example.apiapp.ui.util.translateOrigin(character.origin.name)))
                     Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_medium)))
                     Button(onClick = { onToggleFavorite(character) }) {
                         val favText = if (isFavorite) {
@@ -95,6 +111,13 @@ fun CharacterDetailScreen(
                         Spacer(modifier = Modifier.width(dimensionResource(id = R.dimen.padding_small)))
                         Text(favText)
                     }
+                    Spacer(modifier = Modifier.height(dimensionResource(id = R.dimen.padding_medium)))
+                    PersonalNotesSection(
+                        noteText = noteText,
+                        tags = tags,
+                        onSaveNote = onSaveNote,
+                        onToggleTag = onToggleTag
+                    )
                 }
             }
         }
@@ -120,8 +143,12 @@ private fun CharacterDetailScreenPreview() {
                 )
             ),
             isFavorite = false,
-            errorEvents = emptyFlow(),
+            noteText = "Genius scientist",
+            tags = listOf("Genius", "Sci-Fi"),
+            snackbarEvents = emptyFlow(),
             onToggleFavorite = {},
+            onSaveNote = {},
+            onToggleTag = {},
             onBack = {},
             onRetry = {}
         )

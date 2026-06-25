@@ -10,6 +10,7 @@ import com.example.apiapp.data.model.CharacterDto
 import com.example.apiapp.data.model.CharacterResponseDto
 import com.example.apiapp.data.model.LocationDto
 import com.example.apiapp.data.repository.RickAndMortyRepositoryImpl
+import com.example.apiapp.data.preferences.SettingsDataStore
 import com.example.apiapp.domain.model.Character
 import com.example.apiapp.domain.model.Location
 import kotlinx.coroutines.flow.first
@@ -85,6 +86,7 @@ class RickAndMortyRepositoryIntegrationTest {
 
     @Test
     fun testFavoritesDatabaseFlowIntegration() = runBlocking {
+        dao.insertUser(com.example.apiapp.data.db.UserEntity(id = 1, name = "Rick", avatarResName = "avatar_rick"))
         val character = Character(
             id = 1,
             name = "Rick",
@@ -96,12 +98,12 @@ class RickAndMortyRepositoryIntegrationTest {
             origin = Location("Earth", ""),
             location = Location("Citadel", "")
         )
-        var favorites = repository.getAllFavourites().first()
+        var favorites = repository.getAllFavourites(userId = 1).first()
         assertTrue(favorites.isEmpty())
         
-        repository.toggleFavorite(character)
+        repository.toggleFavorite(character, userId = 1)
         
-        favorites = repository.getAllFavourites().first()
+        favorites = repository.getAllFavourites(userId = 1).first()
         assertEquals(1, favorites.size)
         assertEquals("Rick", favorites[0].name)
     }

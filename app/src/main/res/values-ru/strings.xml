@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">apiapp</string>
+    <string name="remove_from_favorites">Удалить из избранного</string>
+    <string name="add_to_favorites">В избранное</string>
+    <string name="back">Назад</string>
+    <string name="favorites">Избранное</string>
+    <string name="search_characters">Поиск персонажей...</string>
+    <string name="retry">Повторить</string>
+    <string name="app_title">Rick &amp; Morty</string>
+    <string name="details_title">Детали</string>
+    <string name="no_characters_found">Персонажи по запросу \'%1$s\' не найдены</string>
+    <string name="no_favorites_yet">В избранном пока пусто.</string>
+    <string name="character_origin">Происхождение: %1$s</string>
+    <string name="toggle_favorite_error">Не удалось обновить избранное</string>
+    <string name="character_status">Статус: %1$s</string>
+    <string name="character_species">Вид: %1$s</string>
+    <string name="character_gender">Пол: %1$s</string>
+    <string name="recent_searches">Недавние поиски</string>
+    <string name="clear_history">Очистить историю</string>
+    <string name="search_history_empty">История поиска пуста.</string>
+    
+    <!-- settings screen -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_theme_title">Тема оформления</string>
+    <string name="settings_theme_system">Системная</string>
+    <string name="settings_theme_light">Светлая</string>
+    <string name="settings_theme_dark">Темная</string>
+    <string name="settings_sync_title">Фоновое обновление избранного</string>
+    <string name="settings_sync_off">Выключено</string>
+    <string name="settings_sync_15_min">Каждые 15 минут</string>
+    <string name="settings_sync_1_hour">Каждый час</string>
+    <string name="settings_sync_12_hours">Каждые 12 часов</string>
+    <string name="settings_cache_title">Локальный кэш</string>
+    <string name="settings_clear_cache">Очистить кэш персонажей</string>
+    <string name="settings_cache_cleared">Кэш очищен</string>
+    
+    <!-- settings language -->
+    <string name="settings_language_title">Язык приложения</string>
+    <string name="settings_language_system">Системный по умолчанию</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_language_ru">Русский</string>
+    
+    <!-- favorites / personal screen -->
+    <string name="personal_cabinet_title">Личный кабинет</string>
+    <string name="tab_favorites">Избранное</string>
+    <string name="tab_notes_tags">Заметки и теги</string>
+    <string name="tag_filter_all">Все</string>
+    <string name="no_chars_with_tag">Нет персонажей с тегом \"%1$s\"</string>
+    <string name="no_notes_or_tags">У вас пока нет заметок или тегов к персонажам</string>
+    <string name="note_label">Заметка: %1$s</string>
+    
+    <!-- profile dialog -->
+    <string name="default_user_name">Гость</string>
+    <string name="profile_dialog_title">Выберите профиль</string>
+    <string name="profile_dialog_current_profiles">Текущие профили:</string>
+    <string name="profile_dialog_create_new">Создать новый профиль:</string>
+    <string name="profile_dialog_name_label">Имя</string>
+    <string name="profile_dialog_name_taken">Имя уже занято</string>
+    <string name="profile_dialog_btn_create">Создать</string>
+    <string name="profile_dialog_btn_close">Закрыть</string>
+
+    <!-- personal notes section -->
+    <string name="notes_section_title">Моя заметка</string>
+    <string name="notes_section_placeholder">Введите заметку о персонаже...</string>
+    <string name="notes_section_btn_save">Сохранить</string>
+    <string name="tags_section_title">Мои теги</string>
+    <string name="tags_section_placeholder">Новый тег</string>
+    
+    <!-- status filters -->
+    <string name="status_filter_all">Все</string>
+    <string name="status_filter_alive">Живые</string>
+    <string name="status_filter_dead">Мертвые</string>
+    <string name="status_filter_unknown">Неизвестно</string>
+
+    <!-- single status translation -->
+    <string name="status_alive">Жив</string>
+    <string name="status_dead">Мертв</string>
+    
+    <!-- list screen -->
+    <string name="offline_mode_banner">Офлайн-режим (показ локального кэша)</string>
+    <string name="bookmarks_content_description">Закладки</string>
+    <string name="settings_content_description">Настройки</string>
+    <string name="remove_tag">Удалить тег</string>
+    <string name="add_tag">Добавить тег</string>
+    <string name="character_image_desc">Изображение %1$s</string>
+
+    <!-- Character Species -->
+    <string name="species_human">Человек</string>
+    <string name="species_alien">Инопланетянин</string>
+    <string name="species_humanoid">Гуманоид</string>
+    <string name="species_poopybutthole">Мистер Жопосранчик</string>
+    <string name="species_mythological_creature">Мифическое существо</string>
+    <string name="species_animal">Животное</string>
+    <string name="species_robot">Робот</string>
+    <string name="species_cronenberg">Кроненберг</string>
+    <string name="species_disease">Болезнь</string>
+
+    <!-- Character Gender -->
+    <string name="gender_male">Мужской</string>
+    <string name="gender_female">Женский</string>
+    <string name="gender_genderless">Бесполый</string>
+</resources>

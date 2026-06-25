@@ -18,3 +18,5 @@ docs/
 local.properties
 gemini.md
 .log
+diff.patch
+untracked.txt

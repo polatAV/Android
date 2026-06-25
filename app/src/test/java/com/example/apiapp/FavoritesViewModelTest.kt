@@ -4,6 +4,10 @@ import com.example.apiapp.domain.model.Character
 import com.example.apiapp.domain.model.Location
 import com.example.apiapp.domain.usecase.GetFavoritesUseCase
 import com.example.apiapp.domain.usecase.ToggleFavoriteUseCase
+import com.example.apiapp.domain.usecase.GetActiveUserIdUseCase
+import com.example.apiapp.domain.usecase.GetAllNotesUseCase
+import com.example.apiapp.domain.usecase.GetAllTagsUseCase
+import com.example.apiapp.domain.repository.RickAndMortyRepository
 import com.example.apiapp.ui.FavoritesViewModel
 import com.example.apiapp.ui.FavoritesUiState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,8 +26,12 @@ class FavoritesViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val repository = FakeRickAndMortyRepository()
+    private val userRepository = FakeUserRepository()
     private val getFavoritesUseCase = GetFavoritesUseCase(repository)
     private val toggleFavoriteUseCase = ToggleFavoriteUseCase(repository)
+    private val getActiveUserIdUseCase = GetActiveUserIdUseCase(userRepository)
+    private val getAllNotesUseCase = GetAllNotesUseCase(repository)
+    private val getAllTagsUseCase = GetAllTagsUseCase(repository)
     
     private val testCharacters = listOf(
         Character(1, "Rick", "Alive", "Human", "", "Male", "url", Location("Earth", ""), Location("Citadel", ""))
@@ -31,12 +39,22 @@ class FavoritesViewModelTest {
 
     @Test
     fun testFavoritesMapping() = runTest {
-        repository.setFavourites(testCharacters)
-        val viewModel = FavoritesViewModel(getFavoritesUseCase, toggleFavoriteUseCase)
+        userRepository.setActiveUserId(1)
+        repository.toggleFavorite(testCharacters[0], 1)
+
+        val viewModel = FavoritesViewModel(
+            getFavoritesUseCase = getFavoritesUseCase,
+            toggleFavoriteUseCase = toggleFavoriteUseCase,
+            getActiveUserIdUseCase = getActiveUserIdUseCase,
+            getAllNotesUseCase = getAllNotesUseCase,
+            getAllTagsUseCase = getAllTagsUseCase,
+            rickAndMortyRepository = repository
+        )
         
         viewModel.favoritesUiState.filter { it is FavoritesUiState.Success }.first()
         val state = viewModel.favoritesUiState.value
         assertTrue(state is FavoritesUiState.Success)
-        assertEquals(testCharacters, (state as FavoritesUiState.Success).characters)
+        assertEquals(testCharacters, (state as FavoritesUiState.Success).favorites)
     }
 }
+

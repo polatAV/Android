@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">apiapp</string>
     <string name="remove_from_favorites">Remove from Favorites</string>
@@ -18,4 +19,85 @@
     <string name="recent_searches">Recent Searches</string>
     <string name="clear_history">Clear All</string>
     <string name="search_history_empty">Search history is empty.</string>
+    
+    <!-- settings screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_theme_title">Theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_sync_title">Background Sync (Favorites)</string>
+    <string name="settings_sync_off">Off</string>
+    <string name="settings_sync_15_min">Every 15 minutes</string>
+    <string name="settings_sync_1_hour">Every hour</string>
+    <string name="settings_sync_12_hours">Every 12 hours</string>
+    <string name="settings_cache_title">Local Cache</string>
+    <string name="settings_clear_cache">Clear Character Cache</string>
+    <string name="settings_cache_cleared">Cache cleared</string>
+    
+    <!-- settings language -->
+    <string name="settings_language_title">Language</string>
+    <string name="settings_language_system">System Default</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_language_ru">Русский</string>
+    
+    <!-- favorites / personal screen -->
+    <string name="personal_cabinet_title">Personal Cabinet</string>
+    <string name="tab_favorites">Favorites</string>
+    <string name="tab_notes_tags">Notes &amp; Tags</string>
+    <string name="tag_filter_all">All</string>
+    <string name="no_chars_with_tag">No characters with tag \"%1$s\"</string>
+    <string name="no_notes_or_tags">You don\'t have any notes or tags yet</string>
+    <string name="note_label">Note: %1$s</string>
+    
+    <!-- profile dialog -->
+    <string name="default_user_name">Guest</string>
+    <string name="profile_dialog_title">Select Profile</string>
+    <string name="profile_dialog_current_profiles">Current Profiles:</string>
+    <string name="profile_dialog_create_new">Create New Profile:</string>
+    <string name="profile_dialog_name_label">Name</string>
+    <string name="profile_dialog_name_taken">Name is already taken</string>
+    <string name="profile_dialog_btn_create">Create</string>
+    <string name="profile_dialog_btn_close">Close</string>
+
+    <!-- personal notes section -->
+    <string name="notes_section_title">My Note</string>
+    <string name="notes_section_placeholder">Enter note about character...</string>
+    <string name="notes_section_btn_save">Save</string>
+    <string name="tags_section_title">My Tags</string>
+    <string name="tags_section_placeholder">New tag</string>
+    
+    <!-- status filters -->
+    <string name="status_filter_all">All</string>
+    <string name="status_filter_alive">Alive</string>
+    <string name="status_filter_dead">Dead</string>
+    <string name="status_filter_unknown">Unknown</string>
+
+    <!-- single status translation -->
+    <string name="status_alive">Alive</string>
+    <string name="status_dead">Dead</string>
+    
+    <!-- list screen -->
+    <string name="offline_mode_banner">Offline Mode (showing local cache)</string>
+    <string name="bookmarks_content_description">Bookmarks</string>
+    <string name="settings_content_description">Settings</string>
+    <string name="remove_tag">Remove tag</string>
+    <string name="add_tag">Add tag</string>
+    <string name="character_image_desc">Image of %1$s</string>
+
+    <!-- Character Species -->
+    <string name="species_human">Human</string>
+    <string name="species_alien">Alien</string>
+    <string name="species_humanoid">Humanoid</string>
+    <string name="species_poopybutthole">Poopybutthole</string>
+    <string name="species_mythological_creature">Mythological Creature</string>
+    <string name="species_animal">Animal</string>
+    <string name="species_robot">Robot</string>
+    <string name="species_cronenberg">Cronenberg</string>
+    <string name="species_disease">Disease</string>
+
+    <!-- Character Gender -->
+    <string name="gender_male">Male</string>
+    <string name="gender_female">Female</string>
+    <string name="gender_genderless">Genderless</string>
 </resources>

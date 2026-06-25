@@ -5,8 +5,8 @@ import androidx.room.PrimaryKey
 import com.example.apiapp.domain.model.Character
 import com.example.apiapp.domain.model.Location
 
-@Entity(tableName = "favourites")
-data class CharacterEntity(
+@Entity(tableName = "cached_characters")
+data class CachedCharacterEntity(
     @PrimaryKey val id: Int,
     val name: String,
     val status: String,
@@ -15,10 +15,11 @@ data class CharacterEntity(
     val gender: String,
     val image: String,
     val originName: String,
-    val locationName: String
+    val locationName: String,
+    val cachedAt: Long
 )
 
-fun CharacterEntity.toDomain(): Character {
+fun CachedCharacterEntity.toDomain(): Character {
     return Character(
         id = id,
         name = name,
@@ -32,8 +33,8 @@ fun CharacterEntity.toDomain(): Character {
     )
 }
 
-fun Character.toEntity(): CharacterEntity {
-    return CharacterEntity(
+fun Character.toCachedEntity(cachedAt: Long = System.currentTimeMillis()): CachedCharacterEntity {
+    return CachedCharacterEntity(
         id = id,
         name = name,
         status = status,
@@ -42,12 +43,7 @@ fun Character.toEntity(): CharacterEntity {
         gender = gender,
         image = image,
         originName = origin.name,
-        locationName = location.name
+        locationName = location.name,
+        cachedAt = cachedAt
     )
 }
-
-@Entity(tableName = "search_history")
-data class SearchHistoryEntity(
-    @PrimaryKey val query: String,
-    val timestamp: Long
-)

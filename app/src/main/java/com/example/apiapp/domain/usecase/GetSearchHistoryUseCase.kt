@@ -1,13 +1,16 @@
 package com.example.apiapp.domain.usecase
 
-import com.example.apiapp.domain.repository.RickAndMortyRepository
 import kotlinx.coroutines.flow.Flow
+import com.example.apiapp.domain.repository.SearchHistoryRepository
 import javax.inject.Inject
 
 class GetSearchHistoryUseCase @Inject constructor(
-    private val repository: RickAndMortyRepository
+    private val searchHistoryRepository: SearchHistoryRepository
 ) {
-    operator fun invoke(): Flow<List<String>> {
-        return repository.getRecentQueries()
+    operator fun invoke(userId: Int): Flow<List<String>> {
+        return searchHistoryRepository.getRecentQueries(userId)
     }
 }
+
+
+

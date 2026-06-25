@@ -1,13 +1,15 @@
 package com.example.apiapp.domain.usecase
 
 import com.example.apiapp.domain.model.Character
-import com.example.apiapp.domain.repository.RickAndMortyRepository
+import com.example.apiapp.domain.repository.FavoriteRepository
 import javax.inject.Inject
 
 class ToggleFavoriteUseCase @Inject constructor(
-    private val repository: RickAndMortyRepository
+    private val favoriteRepository: FavoriteRepository
 ) {
-    suspend operator fun invoke(character: Character) {
-        repository.toggleFavorite(character)
+    suspend operator fun invoke(character: Character, userId: Int) {
+        favoriteRepository.toggleFavorite(character, userId)
     }
 }
+
+
