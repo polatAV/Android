@@ -5,12 +5,12 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.apiapp.data.api.RickAndMortyApi
 import com.example.apiapp.data.db.AppDatabase
-import com.example.apiapp.data.db.CharacterDao
+import com.example.apiapp.data.db.CachedCharacterDao
+import com.example.apiapp.data.db.FavoriteDao
 import com.example.apiapp.data.model.CharacterDto
 import com.example.apiapp.data.model.CharacterResponseDto
 import com.example.apiapp.data.model.LocationDto
 import com.example.apiapp.data.repository.RickAndMortyRepositoryImpl
-import com.example.apiapp.data.preferences.SettingsDataStore
 import com.example.apiapp.domain.model.Character
 import com.example.apiapp.domain.model.Location
 import kotlinx.coroutines.flow.first
@@ -41,7 +41,8 @@ class FakeRickAndMortyApi : RickAndMortyApi {
 class RickAndMortyRepositoryIntegrationTest {
 
     private lateinit var database: AppDatabase
-    private lateinit var dao: CharacterDao
+    private lateinit var favoriteDao: FavoriteDao
+    private lateinit var cachedCharacterDao: CachedCharacterDao
     private lateinit var api: FakeRickAndMortyApi
     private lateinit var repository: RickAndMortyRepositoryImpl
 
@@ -63,9 +64,10 @@ class RickAndMortyRepositoryIntegrationTest {
             ApplicationProvider.getApplicationContext(),
             AppDatabase::class.java
         ).allowMainThreadQueries().build()
-        dao = database.characterDao()
+        favoriteDao = database.favoriteDao()
+        cachedCharacterDao = database.cachedCharacterDao()
         api = FakeRickAndMortyApi()
-        repository = RickAndMortyRepositoryImpl(api, dao)
+        repository = RickAndMortyRepositoryImpl(api, favoriteDao, cachedCharacterDao)
     }
 
     @After
@@ -85,26 +87,29 @@ class RickAndMortyRepositoryIntegrationTest {
     }
 
     @Test
-    fun testFavoritesDatabaseFlowIntegration() = runBlocking {
-        dao.insertUser(com.example.apiapp.data.db.UserEntity(id = 1, name = "Rick", avatarResName = "avatar_rick"))
+    fun testCachedCharactersIntegration() = runBlocking {
         val character = Character(
-            id = 1,
-            name = "Rick",
+            id = 10,
+            name = "Summer",
             status = "Alive",
             species = "Human",
             type = "",
-            gender = "Male",
+            gender = "Female",
             image = "url",
             origin = Location("Earth", ""),
-            location = Location("Citadel", "")
+            location = Location("Earth", "")
         )
-        var favorites = repository.getAllFavourites(userId = 1).first()
-        assertTrue(favorites.isEmpty())
+
+        repository.saveCachedCharacters(listOf(character))
         
-        repository.toggleFavorite(character, userId = 1)
+        val cachedFlow = repository.getCachedCharactersFlow().first()
+        assertEquals(1, cachedFlow.size)
+        assertEquals("Summer", cachedFlow[0].name)
         
-        favorites = repository.getAllFavourites(userId = 1).first()
-        assertEquals(1, favorites.size)
-        assertEquals("Rick", favorites[0].name)
+        val cachedList = repository.getCachedCharacters()
+        assertEquals(1, cachedList.size)
+        
+        repository.clearCachedCharacters()
+        assertTrue(repository.getCachedCharacters().isEmpty())
     }
 }

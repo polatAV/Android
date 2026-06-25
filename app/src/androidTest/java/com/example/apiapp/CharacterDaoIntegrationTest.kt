@@ -4,11 +4,15 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.apiapp.data.db.AppDatabase
+import com.example.apiapp.data.db.CachedCharacterDao
 import com.example.apiapp.data.db.CachedCharacterEntity
-import com.example.apiapp.data.db.CharacterDao
-import com.example.apiapp.data.db.CharacterEntity
+import com.example.apiapp.data.db.FavoriteCharacterEntity
+import com.example.apiapp.data.db.FavoriteDao
 import com.example.apiapp.data.db.CharacterNoteEntity
 import com.example.apiapp.data.db.CharacterTagEntity
+import com.example.apiapp.data.db.NoteDao
+import com.example.apiapp.data.db.TagDao
+import com.example.apiapp.data.db.UserDao
 import com.example.apiapp.data.db.UserEntity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -25,12 +29,16 @@ import org.junit.runner.RunWith
 class CharacterDaoIntegrationTest {
 
     private lateinit var database: AppDatabase
-    private lateinit var dao: CharacterDao
+    private lateinit var favoriteDao: FavoriteDao
+    private lateinit var noteDao: NoteDao
+    private lateinit var tagDao: TagDao
+    private lateinit var cachedCharacterDao: CachedCharacterDao
+    private lateinit var userDao: UserDao
 
     private val testUser1 = UserEntity(id = 1, name = "Rick", avatarResName = "avatar_rick")
     private val testUser2 = UserEntity(id = 2, name = "Morty", avatarResName = "avatar_morty")
 
-    private val testEntityUser1 = CharacterEntity(
+    private val testEntityUser1 = FavoriteCharacterEntity(
         id = 1,
         userId = 1,
         name = "Rick Sanchez",
@@ -50,9 +58,13 @@ class CharacterDaoIntegrationTest {
                 ApplicationProvider.getApplicationContext(),
                 AppDatabase::class.java
             ).allowMainThreadQueries().build()
-            dao = database.characterDao()
-            dao.insertUser(testUser1)
-            dao.insertUser(testUser2)
+            favoriteDao = database.favoriteDao()
+            noteDao = database.noteDao()
+            tagDao = database.tagDao()
+            cachedCharacterDao = database.cachedCharacterDao()
+            userDao = database.userDao()
+            userDao.insertUser(testUser1)
+            userDao.insertUser(testUser2)
         }
     }
 
@@ -63,34 +75,34 @@ class CharacterDaoIntegrationTest {
 
     @Test
     fun testInsertAndReadFavorite() = runBlocking {
-        dao.insertFavourite(testEntityUser1)
-        val favourites = dao.getAllFavourites(1).first()
+        favoriteDao.insertFavourite(testEntityUser1)
+        val favourites = favoriteDao.getAllFavourites(1).first()
         assertEquals(1, favourites.size)
         assertEquals("Rick Sanchez", favourites[0].name)
 
         // для пользователя 2 список должен быть пуст (изоляция)
-        val favourites2 = dao.getAllFavourites(2).first()
+        val favourites2 = favoriteDao.getAllFavourites(2).first()
         assertTrue(favourites2.isEmpty())
     }
 
     @Test
     fun testToggleFavoriteBehavior() = runBlocking {
         // toggle 1: not present -> should insert
-        dao.toggleFavourite(testEntityUser1)
-        var favourites = dao.getAllFavourites(1).first()
+        favoriteDao.toggleFavourite(testEntityUser1)
+        var favourites = favoriteDao.getAllFavourites(1).first()
         assertEquals(1, favourites.size)
         
         // toggle 2: present -> should delete
-        dao.toggleFavourite(testEntityUser1)
-        favourites = dao.getAllFavourites(1).first()
+        favoriteDao.toggleFavourite(testEntityUser1)
+        favourites = favoriteDao.getAllFavourites(1).first()
         assertTrue(favourites.isEmpty())
     }
 
     @Test
     fun testDuplicatePrevention() = runBlocking {
-        dao.insertFavourite(testEntityUser1)
-        dao.insertFavourite(testEntityUser1)
-        val favourites = dao.getAllFavourites(1).first()
+        favoriteDao.insertFavourite(testEntityUser1)
+        favoriteDao.insertFavourite(testEntityUser1)
+        val favourites = favoriteDao.getAllFavourites(1).first()
         assertEquals(1, favourites.size)
     }
 
@@ -103,20 +115,20 @@ class CharacterDaoIntegrationTest {
             updatedAt = System.currentTimeMillis()
         )
 
-        dao.insertNote(note)
-        val retrievedNote = dao.getNoteForCharacter(1, 1).first()
+        noteDao.insertNote(note)
+        val retrievedNote = noteDao.getNoteForCharacter(1, 1).first()
         assertNotNull(retrievedNote)
         assertEquals("Great scientist", retrievedNote?.noteText)
 
         // обновление заметки
         val updatedNote = note.copy(noteText = "Genius scientist")
-        dao.insertNote(updatedNote)
-        val retrievedNote2 = dao.getNoteForCharacter(1, 1).first()
+        noteDao.insertNote(updatedNote)
+        val retrievedNote2 = noteDao.getNoteForCharacter(1, 1).first()
         assertEquals("Genius scientist", retrievedNote2?.noteText)
 
         // удаление заметки
-        dao.deleteNote(1, 1)
-        val retrievedNote3 = dao.getNoteForCharacter(1, 1).first()
+        noteDao.deleteNote(1, 1)
+        val retrievedNote3 = noteDao.getNoteForCharacter(1, 1).first()
         assertNull(retrievedNote3)
     }
 
@@ -125,16 +137,16 @@ class CharacterDaoIntegrationTest {
         val tag1 = CharacterTagEntity(characterId = 1, userId = 1, tagName = "Hero")
         val tag2 = CharacterTagEntity(characterId = 1, userId = 1, tagName = "Sci-Fi")
 
-        dao.insertTag(tag1)
-        dao.insertTag(tag2)
+        tagDao.insertTag(tag1)
+        tagDao.insertTag(tag2)
 
-        val tags = dao.getTagsForCharacter(1, 1).first()
+        val tags = tagDao.getTagsForCharacter(1, 1).first()
         assertEquals(2, tags.size)
         assertTrue(tags.any { it.tagName == "Hero" })
 
         // удаление одного тега
-        dao.deleteTagByName(1, 1, "Hero")
-        val remainingTags = dao.getTagsForCharacter(1, 1).first()
+        tagDao.deleteTagByName(1, 1, "Hero")
+        val remainingTags = tagDao.getTagsForCharacter(1, 1).first()
         assertEquals(1, remainingTags.size)
         assertEquals("Sci-Fi", remainingTags[0].tagName)
     }
@@ -154,12 +166,12 @@ class CharacterDaoIntegrationTest {
             cachedAt = System.currentTimeMillis()
         )
 
-        dao.insertCachedCharacters(listOf(cachedChar))
-        val cached = dao.getCachedCharacters()
+        cachedCharacterDao.insertCachedCharacters(listOf(cachedChar))
+        val cached = cachedCharacterDao.getCachedCharacters()
         assertEquals(1, cached.size)
         assertEquals("Summer Smith", cached[0].name)
 
-        dao.clearCachedCharacters()
-        assertTrue(dao.getCachedCharacters().isEmpty())
+        cachedCharacterDao.clearCachedCharacters()
+        assertTrue(cachedCharacterDao.getCachedCharacters().isEmpty())
     }
 }
